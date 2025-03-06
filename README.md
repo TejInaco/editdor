@@ -1,7 +1,7 @@
 ![alt text](https://github.com/eclipse/editdor/blob/master/logo/1585_ediTDor_logo.png "ediTDor logo")
 [![Discord](https://img.shields.io/badge/Discord-7289DA?logo=discord&logoColor=white&label=ediTDor)](https://discord.gg/57NsMQxAcu)
 
-A tool for simply designing W3C Thing Descriptions and Thing Models
+A tool for simply designing W3C Thing Descriptions and Thing Models.
 
 Find the ediTDor here to try it out: 
 
