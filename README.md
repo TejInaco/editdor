@@ -58,3 +58,9 @@ All systems require the following:
 * Add Property, Action, Event by wizard
 * Render TD to be more human readable
 * Validate JSON Syntax and JSON Schema for TD (JSONLD and Additional Validation for nested TMs will be implemented in the future)
+
+## Test Drag and Drop funcionality - Linux
+
+Is is necessary to run the following command on the folder or file before testing the funcionality
+
+    sudo xdg-open /home/folder/

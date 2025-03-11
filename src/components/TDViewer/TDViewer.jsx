@@ -10,13 +10,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR W3C-20150513
  ********************************************************************************/
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import ediTDorContext from "../../context/ediTDorContext";
 import {
-    buildAttributeListObject,
-    getDirectedValue,
-    separateForms
+	buildAttributeListObject,
+	getDirectedValue,
+	separateForms,
 } from "../../util";
+import { parseCsvFile } from "../../utils/parseCsv";
 import { AddFormDialog } from "../Dialogs/AddFormDialog";
 import { InfoIconWrapper } from "../InfoIcon/InfoIcon";
 import { getFormsTooltipContent } from "../InfoIcon/InfoTooltips";
@@ -25,107 +26,186 @@ import { InteractionSection } from "./components/InteractionSection";
 import { RenderedObject } from "./components/RenderedObject";
 import ValidationView from "./components/ValidationSection";
 import LinkView from "./components/LinkSection";
+import { useDropzone } from "react-dropzone";
 
 export default function TDViewer() {
-  const context = useContext(ediTDorContext);
+	const context = useContext(ediTDorContext);
 
-    const [td, setTd] = useState(undefined);
-    const alreadyRenderedKeys = [
-        "id",
-        "properties",
-        "actions",
-        "events",
-        "forms",
-        "description",
-        "title",
-        "links",
-    ];
+	const [td, setTd] = useState(undefined);
+	const alreadyRenderedKeys = [
+		"id",
+		"properties",
+		"actions",
+		"events",
+		"forms",
+		"description",
+		"title",
+		"links",
+	];
 
-    const addFormDialog = React.useRef();
-    const openAddFormDialog = () => {
-        addFormDialog.current.openModal();
-    };
+	const addFormDialog = React.useRef();
+	const openAddFormDialog = () => {
+		addFormDialog.current.openModal();
+	};
 
-    useEffect(() => {
-        try {
-            setTd(JSON.parse(context.offlineTD));
-        } catch (e) {
-            console.debug(e);
-        }
-    }, [context.offlineTD]);
+	useEffect(() => {
+		try {
+			setTd(JSON.parse(context.offlineTD));
+		} catch (e) {
+			console.debug(e);
+		}
+	}, [context.offlineTD]);
 
-    if (!td || !Object.keys(td).length) {
-        return (
-            <div className="flex h-full w-full bg-gray-500 justify-center align-center text-center ">
-                <div className="text-4xl text-white place-self-center">
-                    Start writing a new TD by clicking "New TD"
-                </div>
-            </div>
-        );
-    }
+	const onDrop = useCallback(
+		(acceptedFiles) => {
+			const file = acceptedFiles[0];
+			const reader = new FileReader();
+			reader.onabort = () => console.error("File reading  - aborted");
+			reader.onerror = () => console.error("File reading - failed");
+			reader.onload = () => {
+				const fileData = {
+					td: reader.result,
+					fileName: file.name,
+					fileHandle: file,
+				};
 
-    let forms;
-    if (td.forms) {
-        const formsSeparated = separateForms(td.forms);
-        forms = formsSeparated.map((key, index) => {
-            return <Form form={key} propName={index} key={index} />;
-        });
-    }
+				console.log(fileData);
+				console.log(typeof fileData.td);
 
-    const attributeListObject = buildAttributeListObject(
-        td.id ? { id: td.id } : {},
-        td,
-        alreadyRenderedKeys
-    );
+				if (fileData.fileName.includes(".csv")) {
+					// processing CSV to construct a json file
+					// parseCsvFile(fileData.td);
+				}
+				try {
+					context.updateOfflineTD(fileData.td);
+					context.updateIsModified(false);
+					context.setFileHandle(fileData.fileName);
+					context.updateLinkedTd(undefined);
+					context.addLinkedTd(fileData.fileHandle);
+				} catch (e) {
+					console.error("File processing:", e);
+				}
+			};
+			reader.readAsText(file);
+		},
+		[context]
+	);
 
-    return (
-        <div className="h-full w-full bg-gray-500 p-8 overflow-auto">
-            <ValidationView />
-            {td !== undefined && Object.keys(td).length > 0 && (
-                <div>
-                    <div className="text-3xl text-white">
-                        {td.title ? getDirectedValue(td, "title", td["@context"]) : <></>}
-                    </div>
-                    {td.description ? (
-                        <div className="text-xl text-white pt-4">
-                            {getDirectedValue(td, "description", td["@context"])}
-                        </div>
-                    ) : (
-                        <></>
-                    )}
-                    <div className="pt-4">
-                        <RenderedObject {...attributeListObject}></RenderedObject>
-                    </div>
-                </div>
-            )}
+	const { getRootProps, getInputProps, isDragActive } = useDropzone({
+		onDrop,
+		accept: {
+			"application/json": [".json"],
+			"text/csv": [".csv"],
+		},
+		noClick: true,
+		maxFiles: 1,
+		maxSize: 10 * 1024 * 1024, // 10MB
+	});
 
-            <details className="pt-8">
-                <summary className="flex justify-start items-center cursor-pointer">
-                    <div className="flex flex-grow">
-                        <InfoIconWrapper tooltip={getFormsTooltipContent()}>
-                            <h2 className="text-2xl text-white p-1 flex-grow">Forms</h2>
-                        </InfoIconWrapper>
-                    </div>
-                    <button
-                        className="text-white font-bold text-sm bg-blue-500 cursor-pointer rounded-md p-2"
-                        onClick={openAddFormDialog}
-                    >
-                        Add Top Level Form
-                    </button>
-                    <AddFormDialog type="thing" interaction={td} ref={addFormDialog} />
-                </summary>
-                {forms && (
-                    <div className="pt-4">
-                        <div className="rounded-lg bg-gray-600 px-6 pt-4 pb-4">{forms}</div>
-                    </div>
-                )}
-            </details>
+	if (!td || !Object.keys(td).length) {
+		return (
+			<div
+				{...getRootProps()}
+				className="flex h-full w-full bg-gray-500 justify-center justify-items-center align-center text-center "
+			>
+				<input {...getInputProps()} />
+				{isDragActive ? (
+					<div className="text-4xl text-white place-self-center">
+						<p>Drop the files here ...</p>
+					</div>
+				) : (
+					<div className="text-4xl text-white place-self-center">
+						Start writing a new TD by clicking "New"
+						<p>
+							Drag 'n' drop some files here, or click to select
+							files
+						</p>
+					</div>
+				)}
+			</div>
+		);
+	}
 
-            <LinkView />
+	let forms;
+	if (td.forms) {
+		const formsSeparated = separateForms(td.forms);
+		forms = formsSeparated.map((key, index) => {
+			return <Form form={key} propName={index} key={index} />;
+		});
+	}
 
-            <InteractionSection interaction="Properties"></InteractionSection>
-            <InteractionSection interaction="Actions"></InteractionSection>
-            <InteractionSection interaction="Events"></InteractionSection>
-        </div>
-    );
+	const attributeListObject = buildAttributeListObject(
+		td.id ? { id: td.id } : {},
+		td,
+		alreadyRenderedKeys
+	);
+
+	return (
+		<div className="h-full w-full bg-gray-500 p-8 overflow-auto">
+			<ValidationView />
+			{td !== undefined && Object.keys(td).length > 0 && (
+				<div>
+					<div className="text-3xl text-white">
+						{td.title ? (
+							getDirectedValue(td, "title", td["@context"])
+						) : (
+							<></>
+						)}
+					</div>
+					{td.description ? (
+						<div className="text-xl text-white pt-4">
+							{getDirectedValue(
+								td,
+								"description",
+								td["@context"]
+							)}
+						</div>
+					) : (
+						<></>
+					)}
+					<div className="pt-4">
+						<RenderedObject
+							{...attributeListObject}
+						></RenderedObject>
+					</div>
+				</div>
+			)}
+
+			<details className="pt-8">
+				<summary className="flex justify-start items-center cursor-pointer">
+					<div className="flex flex-grow">
+						<InfoIconWrapper tooltip={getFormsTooltipContent()}>
+							<h2 className="text-2xl text-white p-1 flex-grow">
+								Forms
+							</h2>
+						</InfoIconWrapper>
+					</div>
+					<button
+						className="text-white font-bold text-sm bg-blue-500 cursor-pointer rounded-md p-2"
+						onClick={openAddFormDialog}
+					>
+						Add Top Level Form
+					</button>
+					<AddFormDialog
+						type="thing"
+						interaction={td}
+						ref={addFormDialog}
+					/>
+				</summary>
+				{forms && (
+					<div className="pt-4">
+						<div className="rounded-lg bg-gray-600 px-6 pt-4 pb-4">
+							{forms}
+						</div>
+					</div>
+				)}
+			</details>
+
+			<LinkView />
+
+			<InteractionSection interaction="Properties"></InteractionSection>
+			<InteractionSection interaction="Actions"></InteractionSection>
+			<InteractionSection interaction="Events"></InteractionSection>
+		</div>
+	);
 }
