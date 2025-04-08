@@ -15,6 +15,7 @@ import ReactDOM from "react-dom";
 import { ChevronDown } from "react-feather";
 import ediTDorContext from "../../context/ediTDorContext";
 import { DialogTemplate } from "./DialogTemplate";
+import { parseCsv, mapCsvToProperties } from "../../utils/parser";
 
 export const CreateTdDialog = forwardRef((props, ref) => {
   const context = useContext(ediTDorContext);
@@ -22,6 +23,10 @@ export const CreateTdDialog = forwardRef((props, ref) => {
     return false;
   });
   const [type, setType] = React.useState("TD"); // either TD or TM
+  const [properties, setProperties] = React.useState({});
+  const [fileName, setFileName] = React.useState("");
+  const [protocol, setProtocol] = React.useState("Modbus TCP");
+  const fileInputRef = React.useRef(null);
 
   useImperativeHandle(ref, () => {
     return {
@@ -35,6 +40,9 @@ export const CreateTdDialog = forwardRef((props, ref) => {
   };
 
   const close = () => {
+    setFileName("");
+    setProtocol("Modbus TCP");
+    setProperties({});
     setDisplay(false);
   };
 
@@ -42,23 +50,28 @@ export const CreateTdDialog = forwardRef((props, ref) => {
     setType(e.target.value);
   };
 
-  const getType = () => {
-    return type;
-  };
-
-  const content = buildForm(changeType, getType);
+  const content = buildForm(
+    changeType,
+    type,
+    protocol,
+    setProtocol,
+    fileName,
+    setFileName,
+    fileInputRef,
+    setProperties
+  );
 
   if (display) {
     return ReactDOM.createPortal(
       <DialogTemplate
         onCancel={close}
         onSubmit={() => {
-          let td = createNewTD(type);
+          let td = createNewTD(type, properties);
           let linkedTd = {};
           linkedTd[td["title"]] = td;
           context.updateLinkedTd(undefined);
           context.addLinkedTd(linkedTd);
-          context.updateOfflineTD(JSON.stringify(td, null, "\t"));
+          context.updateOfflineTD(JSON.stringify(td, null, 2));
           close();
         }}
         children={content}
@@ -75,18 +88,76 @@ export const CreateTdDialog = forwardRef((props, ref) => {
   return null;
 });
 
-const buildForm = (changeType, getType) => {
+const buildForm = (
+  changeType,
+  type,
+  protocol,
+  setProtocol,
+  fileName,
+  setFileName,
+  fileInputRef,
+  setProperties
+) => {
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setFileName(file.name);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csvContent = e.target.result;
+        const data = parseCsv(csvContent, true, ",");
+        let parsedProperties = {};
+        try {
+          parsedProperties = mapCsvToProperties(data);
+          if (Object.keys(parsedProperties).length === 0) {
+            throw new Error("No valid properties found in the CSV file.");
+          }
+        } catch (error) {
+          alert(error.message);
+        }
+        setProperties(parsedProperties);
+      };
+
+      reader.onerror = (e) => {
+        alert("Reading file:", e.target.error);
+      };
+
+      reader.readAsText(file);
+    }
+  };
+
+  const handleButtonClick = () => {
+    if (!fileInputRef.current) {
+      return;
+    }
+    fileInputRef.current.click();
+  };
+
+  const downloadCsvTemplate = () => {
+    const csvContent = `name,title,description,type,minimum,maximum,unit,href,modbus:unitID,modbus:address,modbus:quantity,modbus:type,modbus:zeroBasedAddressing,modbus:entity,modbus:pollingTime,modbus:function,modbus:mostSignificantByte,modbus:mostSignificantWord,modbus:timeout`;
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "modbus_tcp_properties_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <>
-      <label htmlFor="type" className="text-sm text-gray-400 font-medium pl-2">
+      <label htmlFor="type" className="pl-2 text-sm font-medium text-gray-400">
         Type:
       </label>
       <div className="relative">
         <select
-          className="block appearance-none w-full bg-gray-600 border-2 border-gray-600 text-white py-3 px-4 pr-8 rounded leading-tight focus:border-blue-500 focus:outline-none"
+          className="block w-full appearance-none rounded border-2 border-gray-600 bg-gray-600 px-4 py-3 pr-8 leading-tight text-white focus:border-blue-500 focus:outline-none"
           id="type"
           onChange={changeType}
-          value={getType()}
+          value={type}
         >
           <option value="TD">Thing Description</option>
           <option value="TM">Thing Model</option>
@@ -105,33 +176,25 @@ const buildForm = (changeType, getType) => {
       )}
       <label
         htmlFor="thing-description"
-        className="text-sm text-gray-400 font-medium pl-2"
+        className="pl-2 text-sm font-medium text-gray-400"
       >
         Description:
       </label>
       <textarea
         id="thing-description"
         rows="5"
-        className="bg-gray-600
-                sm:text-sm
-                appearance-none
-                border-2 border-gray-600 rounded w-full
-                p-2
-                text-white
-                leading-tight
-                focus:outline-none
-                focus:border-blue-500"
+        className="w-full appearance-none rounded border-2 border-gray-600 bg-gray-600 p-2 leading-tight text-white focus:border-blue-500 focus:outline-none sm:text-sm"
         placeholder="A short description about this new Thing..."
       />
       <label
         htmlFor="thing-security"
-        className="text-sm text-gray-400 font-medium pl-2"
+        className="pl-2 text-sm font-medium text-gray-400"
       >
         Security:
       </label>
-      <div className="relative">
+      <div className="relative mb-8">
         <select
-          className="block appearance-none w-full bg-gray-600 border-2 border-gray-600 text-white py-3 px-4 pr-8 rounded leading-tight focus:border-blue-500 focus:outline-none"
+          className="block w-full appearance-none rounded border-2 border-gray-600 bg-gray-600 px-4 py-3 pr-8 leading-tight text-white focus:border-blue-500 focus:outline-none"
           id="thing-security"
         >
           <option>nosec</option>
@@ -146,6 +209,74 @@ const buildForm = (changeType, getType) => {
           <ChevronDown color="#cacaca"></ChevronDown>
         </div>
       </div>
+      <div className="pt-2">
+        <label
+          htmlFor="submit-csv"
+          className="pl-2 text-sm font-medium text-gray-400"
+        >
+          Add properties in CSV format:
+        </label>
+      </div>
+
+      <div className="flex justify-between rounded border-2 border-gray-600">
+        <div className="flex justify-between">
+          <div className="flex items-center p-2">
+            <label
+              htmlFor="protocol-option"
+              className="pl-2 pr-2 text-lg text-gray-400"
+            >
+              Protocol:
+            </label>
+
+            <div className="relative">
+              <select
+                id="protocol-option"
+                className="block appearance-none rounded border-2 border-gray-600 bg-gray-600 px-4 py-2 pr-8 leading-tight text-white focus:border-blue-500 focus:outline-none"
+                value={protocol}
+                onChange={(e) => setProtocol(e.target.value)}
+              >
+                <option>Modbus TCP</option>
+                <option disabled>
+                  More protocols will be supported in the future
+                </option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <ChevronDown color="#cacaca"></ChevronDown>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center">
+            <button
+              id="download-template"
+              className="rounded border-2 border-gray-600 bg-blue-500 p-2 leading-tight text-white focus:border-blue-500 focus:outline-none"
+              onClick={downloadCsvTemplate}
+            >
+              Download CSV Template
+            </button>
+          </div>
+        </div>
+
+        <div className="ml-2 mr-2 flex items-center">
+          <input
+            type="file"
+            accept=".csv"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            style={{ display: "none" }}
+          />
+          <button
+            id="submit-csv"
+            className="rounded border-2 border-gray-600 bg-blue-500 p-2 leading-tight text-white focus:border-blue-500 focus:outline-none"
+            onClick={handleButtonClick}
+          >
+            Load a CSV File
+          </button>
+          <div className="">
+            <p className="pl-2">{fileName || "No file selected"}</p>
+          </div>
+        </div>
+      </div>
     </>
   );
 };
@@ -153,13 +284,13 @@ const buildForm = (changeType, getType) => {
 const formField = (label, placeholder, id, type, autoFocus) => {
   return (
     <div key={id} className="py-1">
-      <label htmlFor={id} className="text-sm text-gray-400 font-medium pl-2">
+      <label htmlFor={id} className="pl-2 text-sm font-medium text-gray-400">
         {label}:
       </label>
       <input
         name={id}
         id={id}
-        className="border-gray-600 bg-gray-600 w-full p-2 sm:text-sm border-2 text-white rounded-md focus:outline-none focus:border-blue-500"
+        className="w-full rounded-md border-2 border-gray-600 bg-gray-600 p-2 text-white focus:border-blue-500 focus:outline-none sm:text-sm"
         placeholder={placeholder}
         type={type}
         autoFocus={autoFocus === "autoFocus"}
@@ -168,7 +299,7 @@ const formField = (label, placeholder, id, type, autoFocus) => {
   );
 };
 
-const createNewTD = (type) => {
+const createNewTD = (type, properties) => {
   let id = document.getElementById("thing-id").value;
   let title = document.getElementById("thing-title").value;
   let base = document.getElementById("thing-base").value;
@@ -203,7 +334,7 @@ const createNewTD = (type) => {
   thing["securityDefinitions"] = securityDefinitions;
   thing["security"] = `${tdSecurity}_sc`;
 
-  thing["properties"] = {};
+  thing["properties"] = properties;
   thing["actions"] = {};
   thing["events"] = {};
 

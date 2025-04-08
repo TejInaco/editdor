@@ -3,16 +3,18 @@
 # dependencies
 /node_modules
 /.pnp
-.pnp.js
+.pnp.cjs
+.pnp.loader.mjs
 
 */.vscode
-.vscode/
+.vscode
 
 # testing
 /coverage
 
 # production
 /build
+dist
 
 # misc
 .DS_Store
@@ -28,3 +30,5 @@ yarn-debug.log*
 yarn-error.log*
 
 yarn.lock
+.yarn
+/doc/tests
