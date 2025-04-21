@@ -23,7 +23,7 @@ import { RefreshCw } from "react-feather";
 import { retrieveThing } from "./services/thingsApiService";
 import { decompressSharedTd } from "./share";
 
-const GlobalStateWrapper = (props) => {
+const GlobalStateWrapper = () => {
   return (
     <GlobalState>
       <App />
@@ -34,7 +34,7 @@ const GlobalStateWrapper = (props) => {
 // The useEffect hook for checking the URI was called twice somehow.
 // This variable prevents the callback from being executed twice.
 let checkedUrl = false;
-const App = (props) => {
+const App = () => {
   const context = useContext(ediTDorContext);
 
   const [doShowJSON, setDoShowJSON] = useState(false);
