@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2018 - 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -10,23 +10,35 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR W3C-20150513
  ********************************************************************************/
-import React, { forwardRef, useContext, useImperativeHandle } from "react";
+import React, {
+  forwardRef,
+  useContext,
+  ChangeEvent,
+  useImperativeHandle,
+} from "react";
 import ReactDOM from "react-dom";
 import { ChevronDown } from "react-feather";
 import ediTDorContext from "../../context/ediTDorContext";
 import { DialogTemplate } from "./DialogTemplate";
 import { parseCsv, mapCsvToProperties } from "../../utils/parser";
+import { IThingDescription } from "types/td";
 
-export const CreateTdDialog = forwardRef((props, ref) => {
+interface CreateTdDialogRef {
+  openModal: () => void;
+  close: () => void;
+}
+
+type Protocol = "Modbus TCP" | "Modbus RTU";
+type ThingType = "TD" | "TM";
+
+export const CreateTdDialog = forwardRef<CreateTdDialogRef>((_, ref) => {
   const context = useContext(ediTDorContext);
-  const [display, setDisplay] = React.useState(() => {
-    return false;
-  });
-  const [type, setType] = React.useState("TD"); // either TD or TM
-  const [properties, setProperties] = React.useState({});
-  const [fileName, setFileName] = React.useState("");
-  const [protocol, setProtocol] = React.useState("Modbus TCP");
-  const fileInputRef = React.useRef(null);
+  const [display, setDisplay] = React.useState<boolean>(false);
+  const [type, setType] = React.useState<ThingType>("TD"); // either TD or TM
+  const [properties, setProperties] = React.useState<Record<string, any>>({});
+  const [fileName, setFileName] = React.useState<string>("");
+  const [protocol, setProtocol] = React.useState<Protocol>("Modbus TCP");
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useImperativeHandle(ref, () => {
     return {
@@ -35,19 +47,19 @@ export const CreateTdDialog = forwardRef((props, ref) => {
     };
   });
 
-  const open = () => {
+  const open = (): void => {
     setDisplay(true);
   };
 
-  const close = () => {
+  const close = (): void => {
     setFileName("");
     setProtocol("Modbus TCP");
     setProperties({});
     setDisplay(false);
   };
 
-  const changeType = (e) => {
-    setType(e.target.value);
+  const changeType = (e: ChangeEvent<HTMLSelectElement>): void => {
+    setType(e.target.value as ThingType);
   };
 
   const content = buildForm(
@@ -62,6 +74,12 @@ export const CreateTdDialog = forwardRef((props, ref) => {
   );
 
   if (display) {
+    const modalRoot = document.getElementById("modal-root");
+    if (!modalRoot) {
+      console.error("Modal element not found in the DOM");
+      return null;
+    }
+
     return ReactDOM.createPortal(
       <DialogTemplate
         onCancel={close}
@@ -81,7 +99,7 @@ export const CreateTdDialog = forwardRef((props, ref) => {
           "To quickly create a basis for your new Thing Description/Thing Model just fill out this little template and we'll get you going."
         }
       />,
-      document.getElementById("modal-root")
+      modalRoot
     );
   }
 
@@ -89,22 +107,23 @@ export const CreateTdDialog = forwardRef((props, ref) => {
 });
 
 const buildForm = (
-  changeType,
-  type,
-  protocol,
-  setProtocol,
-  fileName,
-  setFileName,
-  fileInputRef,
-  setProperties
-) => {
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
+  changeType: (e: ChangeEvent<HTMLSelectElement>) => void,
+  type: ThingType,
+  protocol: Protocol,
+  setProtocol: React.Dispatch<React.SetStateAction<Protocol>>,
+  fileName: string,
+  setFileName: React.Dispatch<React.SetStateAction<string>>,
+  fileInputRef: React.RefObject<HTMLInputElement>,
+  setProperties: React.Dispatch<React.SetStateAction<Record<string, any>>>
+): JSX.Element => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    const file = event.target.files?.[0];
     if (file) {
       setFileName(file.name);
       const reader = new FileReader();
       reader.onload = (e) => {
-        const csvContent = e.target.result;
+        const csvContent = e.target?.result as string;
+
         const data = parseCsv(csvContent, true, ",");
         let parsedProperties = {};
         try {
@@ -112,28 +131,29 @@ const buildForm = (
           if (Object.keys(parsedProperties).length === 0) {
             throw new Error("No valid properties found in the CSV file.");
           }
-        } catch (error) {
+        } catch (error: any) {
+          setFileName("");
           alert(error.message);
         }
         setProperties(parsedProperties);
       };
 
-      reader.onerror = (e) => {
-        alert("Reading file:", e.target.error);
+      reader.onerror = (ev) => {
+        alert("Reading file:" + ev.target?.error);
       };
 
       reader.readAsText(file);
     }
   };
 
-  const handleButtonClick = () => {
+  const handleButtonClick = (): void => {
     if (!fileInputRef.current) {
       return;
     }
     fileInputRef.current.click();
   };
 
-  const downloadCsvTemplate = () => {
+  const downloadCsvTemplate = (): void => {
     const csvContent = `name,title,description,type,minimum,maximum,unit,href,modbus:unitID,modbus:address,modbus:quantity,modbus:type,modbus:zeroBasedAddressing,modbus:entity,modbus:pollingTime,modbus:function,modbus:mostSignificantByte,modbus:mostSignificantWord,modbus:timeout`;
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -182,7 +202,7 @@ const buildForm = (
       </label>
       <textarea
         id="thing-description"
-        rows="5"
+        rows={5}
         className="w-full appearance-none rounded border-2 border-gray-600 bg-gray-600 p-2 leading-tight text-white focus:border-blue-500 focus:outline-none sm:text-sm"
         placeholder="A short description about this new Thing..."
       />
@@ -233,7 +253,7 @@ const buildForm = (
                 id="protocol-option"
                 className="block appearance-none rounded border-2 border-gray-600 bg-gray-600 px-4 py-2 pr-8 leading-tight text-white focus:border-blue-500 focus:outline-none"
                 value={protocol}
-                onChange={(e) => setProtocol(e.target.value)}
+                onChange={(e) => setProtocol(e.target.value as Protocol)}
               >
                 <option>Modbus TCP</option>
                 <option disabled>
@@ -281,7 +301,13 @@ const buildForm = (
   );
 };
 
-const formField = (label, placeholder, id, type, autoFocus) => {
+const formField = (
+  label: string,
+  placeholder: string,
+  id: string,
+  type: "text" | "url",
+  autoFocus?: "autoFocus"
+): JSX.Element => {
   return (
     <div key={id} className="py-1">
       <label htmlFor={id} className="pl-2 text-sm font-medium text-gray-400">
@@ -299,18 +325,28 @@ const formField = (label, placeholder, id, type, autoFocus) => {
   );
 };
 
-const createNewTD = (type, properties) => {
-  let id = document.getElementById("thing-id").value;
-  let title = document.getElementById("thing-title").value;
-  let base = document.getElementById("thing-base").value;
+const createNewTD = (
+  type: ThingType,
+  properties: Record<string, any>
+): IThingDescription => {
+  let id = (document.getElementById("thing-id") as HTMLInputElement)?.value;
+  let title = (document.getElementById("thing-title") as HTMLInputElement)
+    ?.value;
+  let base = (document.getElementById("thing-base") as HTMLInputElement)?.value;
 
-  let tdDescription = document.getElementById("thing-description").value;
-  let tdSecurity = document.getElementById("thing-security").value;
+  let tdDescription = (
+    document.getElementById("thing-description") as HTMLTextAreaElement
+  )?.value;
+  let tdSecurity = (
+    document.getElementById("thing-security") as HTMLSelectElement
+  )?.value;
 
-  var thing = {};
-
-  thing["@context"] = "https://www.w3.org/2019/wot/td/v1";
-  thing["title"] = title !== "" ? title : "ediTDor Thing";
+  const thing: IThingDescription = {
+    "@context": "https://www.w3.org/2019/wot/td/v1",
+    title: title !== "" ? title : "ediTDor Thing",
+    securityDefinitions: {},
+    security: "",
+  };
 
   if (type === "TM") {
     thing["@type"] = "tm:ThingModel";
