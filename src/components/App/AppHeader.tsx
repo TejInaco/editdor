@@ -10,13 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR W3C-20150513
  ********************************************************************************/
-import React, {
-  useCallback,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-} from "react";
+import React, { useCallback, useContext, useState, useEffect } from "react";
 import {
   Download,
   File,
@@ -51,9 +45,7 @@ const VALIDATION_FAILED_MESSAGE =
 
 const AppHeader: React.FC = () => {
   const context = useContext(ediTDorContext);
-  const td: ThingDescription = context.parsedTD;
-  /** States*/
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [errorDisplay, setErrorDisplay] = useState<{
     state: boolean;
     message: string;
@@ -119,8 +111,65 @@ const AppHeader: React.FC = () => {
         state: true,
         message: msg,
       });
+      setErrorDisplay({
+        state: true,
+        message: msg,
+      });
     }
   }, [context, verifyDiscard]);
+
+  /**
+   * @description
+   * *save* tries to save the TD/TM via some intermediary or thing directory,
+   * which supports the Things API (https://www.w3.org/TR/wot-discovery/#exploration-directory-api-things).
+   *
+   * If there is no endpoint to such a Things API defined, it falls back to
+   * simply downloading it.
+   */
+  const save = useCallback(async () => {
+    const td = context.parsedTD;
+
+    if (!context.isValidJSON) {
+      setErrorDisplay({
+        state: true,
+        message:
+          "The TD is not valid JSON. Please fix the errors before saving.",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    const targetUrl = getTargetUrl();
+    if (targetUrl === "") {
+      // no target url provided, save to file
+      const fileHandle = await fileTdService.saveToFile(
+        context.name,
+        context.fileHandle,
+        context.offlineTD
+      );
+      context.setFileHandle(fileHandle ?? context.fileHandle);
+    } else {
+      // target url provided, try to save it through the Things API
+      try {
+        if (td.id) {
+          thingsApiService.createThing(td, targetUrl);
+        } else {
+          thingsApiService.createAnonymousThing(td, targetUrl);
+        }
+      } catch (error) {
+        console.debug(error);
+        setErrorDisplay({
+          state: true,
+          message:
+            "Didn't save TD. Please check if the provided target URL is correct and the intermediary / thing directory is working as intended.",
+        });
+        return;
+      }
+    }
+
+    context.updateIsModified(false);
+    setIsLoading(false);
+  }, [context]);
 
   const createNewFile = useCallback(async () => {
     setIsLoading(true);
@@ -139,8 +188,6 @@ const AppHeader: React.FC = () => {
         message:
           "Didn't save TD. The action was either canceled or ran into an error.",
       });
-    } finally {
-      setIsLoading(false);
     }
   }, [context]);
 
