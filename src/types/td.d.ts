@@ -18,7 +18,7 @@ declare module "*.png" {
   const value: string;
   export default value;
 }
-*/
+
 declare const APP_VERSION: string;
 
 declare module "*.png" {
