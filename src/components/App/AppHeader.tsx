@@ -24,7 +24,7 @@ import {
 import editdorLogo from "../../assets/editdor.png";
 import ediTDorContext from "../../context/ediTDorContext";
 import * as fileTdService from "../../services/fileTdService";
-import { getTargetUrl } from "../../services/smartConnector";
+import { getTargetUrl } from "../../services/localStorage";
 import * as thingsApiService from "../../services/thingsApiService";
 import { isThingModel } from "../../util";
 import ConvertTmDialog from "../Dialogs/ConvertTmDialog";
@@ -55,27 +55,10 @@ const AppHeader: React.FC = () => {
     state: false,
     message: "",
   });
-  /** Refs */
-  const convertTmDialog = useRef<{
-    openModal: () => void;
-    close: () => void;
-  }>(null);
-  const shareDialog = useRef<{ openModal: () => void }>(null);
-  const createTdDialog = useRef<{ openModal: () => void }>(null);
-  const settingsDialog = useRef<{
-    openModal: () => void;
-    close: () => void;
-  }>(null);
-  const contributeToCatalog = useRef<{
-    openModal: () => void;
-    close: () => void;
-  }>(null);
-  const sendTdDialog = useRef<{
-    openModal: () => void;
-    close: () => void;
-  }>(null);
+  const [saveToCatalog, setSaveToCatalog] = useState<boolean>(false);
+  const [useNorthboundForInteractions, setUseNorthboundForInteractions] =
+    useState<boolean>(false);
 
-  /** Callbacks */
   const verifyDiscard = useCallback((): boolean => {
     if (!context.isModified) {
       return true;
@@ -172,7 +155,7 @@ const AppHeader: React.FC = () => {
 
     context.updateIsModified(false);
     setIsLoading(false);
-  }, [context]);
+  }, [context, saveToCatalog]);
 
   const createNewFile = useCallback(async () => {
     setIsLoading(true);
@@ -199,6 +182,8 @@ const AppHeader: React.FC = () => {
       setIsLoading(true);
       const res = await func();
       setIsLoading(false);
+
+      //console.log(res);
       return res;
     };
   };
@@ -262,9 +247,19 @@ const AppHeader: React.FC = () => {
     createTdDialog.current?.openModal();
   };
 
+  const settingsDialog = React.useRef<{
+    openModal: () => void;
+    close: () => void;
+  }>(null);
+
   const handleOpenSettingsDialog = () => {
     settingsDialog.current?.openModal();
   };
+
+  const contributeToCatalog = React.useRef<{
+    openModal: () => void;
+    close: () => void;
+  }>(null);
 
   const handleOpenContributeToCatalog = (): void => {
     if (!context.offlineTD) {
@@ -287,38 +282,9 @@ const AppHeader: React.FC = () => {
     }
   };
 
-  const handleSendTD = async () => {
-    if (!context.offlineTD || Object.keys(context.offlineTD).length === 0) {
-      setErrorDisplay({
-        state: true,
-        message:
-          "No Thing Description available to send. Please load a valid TD.",
-      });
-    } else if (context.validationMessage?.report.schema === "failed") {
-      setErrorDisplay({
-        state: true,
-        message: VALIDATION_FAILED_MESSAGE,
-      });
-    } else if (!getTargetUrl("southbound")) {
-      setErrorDisplay({
-        state: true,
-        message:
-          "No Southbound URL available. Please configure the Southbound URL on settings",
-      });
-    } else if (!td.id) {
-      setErrorDisplay({
-        state: true,
-        message:
-          "No identifier available on Thing description. Please add an identifier to the TD.",
-      });
-    } else {
-      sendTdDialog.current?.openModal();
-    }
+  const handleChangeOnSaveToCatalog = (value: boolean): void => {
+    setSaveToCatalog(value);
   };
-
-  // Condition necessary to improve the typescript checks as id is optional
-  // in the current version of wot-thing-description-types
-  const currentTdId = td.id ?? "";
 
   return (
     <>
@@ -388,7 +354,15 @@ const AppHeader: React.FC = () => {
       <ConvertTmDialog ref={convertTmDialog} />
       <ShareDialog ref={shareDialog} />
       <CreateTdDialog ref={createTdDialog} />
-      <SettingsDialog ref={settingsDialog} />
+      <SettingsDialog
+        ref={settingsDialog}
+        saveToCatalog={saveToCatalog}
+        handleChangeOnSaveToCatalog={handleChangeOnSaveToCatalog}
+        useNorthboundForInteractions={useNorthboundForInteractions}
+        handleChangeOnUseNorthboundForInteractions={
+          setUseNorthboundForInteractions
+        }
+      />
       <ContributeToCatalog ref={contributeToCatalog} />
       <ErrorDialog
         isOpen={errorDisplay.state}
