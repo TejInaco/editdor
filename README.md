@@ -121,6 +121,37 @@ Example of use:
 
     http://localhost:5173/?northbound=http://localhost:8080&southbound=http://github.com&valuePath=/value
 
+### Contribution to Cataloge feature
+
+You will need the following [tmc]() library to run in the terminal, and have your own catalog locally:
+
+    go install github.com/wot-oss/tmc@v0.1.2
+    $GOPATH/bin/tmc
+    ./tmc-linux-amd64
+
+The most use commands to test are:
+
+    tmc serve
+    tmc repo add --type file <nameOfCatalog> ~/tm-catalog
+
+You will have a local folder inside tm-catalog folder
+
+    tmc list
+    tmc repo list
+    tmc repo remove <nameOfCatalog>
+
+### Send TD feature
+
+To use the **_Send TD_** feature is necessary to define on Settings pop up the Southbound URLs. The Send TD feature allows you to deploy your Thing Description directly to a Third Party Service.
+
+#### Configuration
+
+1. Open the Settings dialog from the main toolbar
+2. Enter your Southbound URL in the designated field (e.g., `http://localhost:8080`)
+3. Click Save to store the URL
+
+The feature uses the Southbound API architecture to communicate with devices. The TD is sent via HTTP POST to the configured endpoint. This enables direct deployment of your edited Thing Description to compatible WoT devices.
+
 ## Implemented Features:
 
 - JSON Editor with JSON Schema support for TD (Autocompletion, JSON Schema Validation)
