@@ -17,7 +17,7 @@ This project aims to make creating W3C Thing Description (TD) instances and Thin
 - Validating the Thing Description / Thing Model
 - Exporting the Thing Description / Thing Model from the visual representation into JSON-LD
 - Reading/writing exposed properties' values exposed by a proxy (anything that can translate a protocol to HTTP)
-- Contributing the Thing Model to a third-party catalog using [the Thing Model Catalog API](https://github.com/wot-oss/tmc)
+- Exporting the Thing Description / Things Model to a thrid party service by using available API or contributing to a catalog
 
 ## Technologies
 
