@@ -116,27 +116,6 @@ const App: React.FC = () => {
       context.updateOfflineTD(JSON.stringify(td, null, 2));
     }
 
-    const proxyEndpointUrl = url.searchParams.get("proxyEndpoint");
-    const southboundTdId = url.searchParams.get("southboundTdId");
-    if (southboundTdId !== null) {
-      retrieveThing(southboundTdId, proxyEndpointUrl)
-        .then((td) => {
-          if (!td === undefined) {
-            setErrorDisplay({
-              state: true,
-              message: `No Thing Description with id '${southboundTdId}' could be fetched from the proxy.`,
-            });
-
-            return;
-          }
-
-          context.updateOfflineTD(JSON.stringify(td, null, 2));
-        })
-        .catch(() => {
-          showError(`Error unable to fetch TD from proxy: ${proxyEndpointUrl}`);
-        });
-    }
-
     if (url.searchParams.has("localstorage")) {
       let td = localStorage.getItem("td");
       if (!td) {
