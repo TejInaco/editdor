@@ -138,7 +138,7 @@ const SendTDDialog = forwardRef<SendTDDialogRef, SendTDDialogProps>(
             ...requestUpdate,
             isLoading: false,
             success: true,
-            message: `TD updated successfully to ${endpoint}!`,
+            message: `TD updated successfully to ${endpoint}`,
             reason: "",
           });
         }
@@ -176,7 +176,7 @@ const SendTDDialog = forwardRef<SendTDDialogRef, SendTDDialogProps>(
             ...requestSend,
             isLoading: false,
             success: true,
-            message: `TD sent successfully to ${endpoint}!`,
+            message: `TD sent successfully to ${endpoint}`,
             reason: "",
           });
           setIsUpdate(true);
