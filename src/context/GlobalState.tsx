@@ -25,6 +25,7 @@ export const REMOVE_ONE_OF_A_KIND_FROM_TD = "REMOVE_ONE_OF_A_KIND_FROM_TD";
 export const ADD_LINKED_TD = "ADD_LINKED_TD";
 export const UPDATE_LINKED_TD = "UPDATE_LINKED_TD";
 export const UPDATE_VALIDATION_MESSAGE = "UPDATE_VALIDATION_MESSAGE";
+export const UPDATE_NORTHBOUND_CONNECTION = "UPDATE_NORTHBOUND_CONNECTION";
 
 interface IGlobalStateProps {
   children: ReactNode;
@@ -104,6 +105,15 @@ const GlobalState: React.FC<IGlobalStateProps> = ({ children }) => {
     });
   };
 
+  const updateNorthboundConnection = (
+    northboundConnection: INorthboundConnection
+  ) => {
+    dispatch({
+      type: UPDATE_NORTHBOUND_CONNECTION,
+      northboundConnection,
+    });
+  };
+
   return (
     <EdiTDorContext.Provider
       value={{
@@ -115,6 +125,7 @@ const GlobalState: React.FC<IGlobalStateProps> = ({ children }) => {
         fileHandle: editdorState.fileHandle,
         linkedTd: editdorState.linkedTd,
         validationMessage: editdorState.validationMessage,
+        northboundConnection: editdorState.northboundConnection,
         updateOfflineTD,
         updateIsModified,
         setFileHandle,
@@ -125,6 +136,7 @@ const GlobalState: React.FC<IGlobalStateProps> = ({ children }) => {
         addLinkedTd,
         updateLinkedTd,
         updateValidationMessage,
+        updateNorthboundConnection,
       }}
     >
       {children}

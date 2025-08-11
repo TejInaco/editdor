@@ -23,6 +23,7 @@ import {
 } from "../../services/thingsApiService";
 import RequestSuccessful from "./base/RequestSuccessful";
 import RequestFailed from "./base/RequestFailed";
+import { fetchNorthboundTD } from "../../services/thingsApiService";
 
 export interface SendTDDialogRef {
   openModal: () => void;
@@ -151,6 +152,12 @@ const SendTDDialog = forwardRef<SendTDDialogRef, SendTDDialogProps>(
           reason: response.reason || "",
         });
       }
+
+      const responseNorthbound = await fetchNorthboundTD(currentTdId);
+      context.updateNorthboundConnection({
+        message: responseNorthbound.message,
+        northboundTd: responseNorthbound.data ?? {},
+      });
     };
 
     const handleSendTd = async () => {
@@ -190,6 +197,7 @@ const SendTDDialog = forwardRef<SendTDDialogRef, SendTDDialogProps>(
           reason: response.reason || "",
         });
       }
+      await fetchNorthboundTD(currentTdId);
     };
 
     const renderDialogContent = () => {

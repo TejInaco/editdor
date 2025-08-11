@@ -15,7 +15,7 @@ import ediTDorContext from "../../context/ediTDorContext";
 import { GitHub } from "react-feather";
 import type { ThingDescription } from "wot-thing-description-types";
 
-const AppFooter: React.FC = (props) => {
+const AppFooter: React.FC = () => {
   const context = useContext(ediTDorContext);
 
   const megaBytes = formatByteSize(context.offlineTD.length);
@@ -39,7 +39,11 @@ const AppFooter: React.FC = (props) => {
             <div>| Actions: {actionsCount}</div>
             <div>| Events: {eventsCount}</div>
             <div>| Size: {megaBytes}</div>
+            <div>
+              | Northbound State: {context.northboundConnection.message ?? ""}
+            </div>
           </div>
+
           <div className="flex grow gap-2 md:hidden">
             <div>P: {propertiesCount}</div>
             <div>| A: {actionsCount}</div>

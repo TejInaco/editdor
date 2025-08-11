@@ -1,3 +1,22 @@
+/********************************************************************************
+ * Copyright (c) 2018 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the W3C Software Notice and
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR W3C-20150513
+ ********************************************************************************/
+import type { ThingDescription } from "wot-thing-description-types";
+
+interface INorthboundConnection {
+  readonly message: string;
+  readonly northboundTd: ThingDescription | {};
+}
+
 interface IEdiTDorContext {
   // offlineTD: Saving or displaying the TD as JSON For storage, sharing, or exporting Primary source of truth for the TD
   offlineTD: string;
@@ -9,6 +28,7 @@ interface IEdiTDorContext {
   fileHandle: string | null;
   linkedTd: Record<string, any>;
   validationMessage?: any;
+  northboundConnection: INorthboundConnection;
 
   // Callback functions
   updateOfflineTD: (td: string) => void;
@@ -26,6 +46,9 @@ interface IEdiTDorContext {
   addLinkedTd: (linkedTd: Record<string, any>) => void;
   updateLinkedTd: (linkedTd: Record<string, any>) => void;
   updateValidationMessage: (validationMessage?: any) => void;
+  updateNorthboundConnection: (
+    northboundConnection: INorthboundConnection
+  ) => void;
 }
 
 type EditorState = Omit<
@@ -67,4 +90,8 @@ type Action =
     }
   | { type: "ADD_LINKED_TD"; linkedTd: any }
   | { type: "UPDATE_LINKED_TD"; linkedTd: any }
-  | { type: "UPDATE_VALIDATION_MESSAGE"; validationMessage: any };
+  | { type: "UPDATE_VALIDATION_MESSAGE"; validationMessage: any }
+  | {
+      type: "UPDATE_NORTHBOUND_CONNECTION";
+      northboundConnection: INorthboundConnection;
+    };

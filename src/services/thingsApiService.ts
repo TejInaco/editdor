@@ -12,6 +12,7 @@
  ********************************************************************************/
 import type { ThingDescription } from "wot-thing-description-types";
 import { Method, RequestWebOptions } from "../types/td";
+import { getTargetUrl } from "./localStorage";
 
 interface HttpSuccessResponse {
   data: Response;
@@ -144,4 +145,47 @@ const requestWeb = async (
   });
 };
 
-export { requestWeb, isSuccessResponse, handleHttpRequest };
+const fetchNorthboundTD = async (
+  tdId: string
+): Promise<{ message: string; data: ThingDescription | null }> => {
+  try {
+    const northboundUrl = getTargetUrl("northbound");
+    if (!northboundUrl) {
+      throw new Error("No northbound URL configured in settings");
+    }
+
+    const endpoint = `${northboundUrl}${northboundUrl.endsWith("/") ? "" : "/"}${encodeURIComponent(tdId)}`;
+
+    const response = await handleHttpRequest(endpoint, "GET");
+
+    if (isSuccessResponse(response)) {
+      try {
+        const responseData = await response.data.json();
+        return {
+          message: "Northbound TD available",
+          data: responseData as ThingDescription,
+        };
+      } catch (error) {
+        return {
+          message: "Failed to parse northbound TD",
+          data: null,
+        };
+      }
+    } else {
+      const errorMessage = response.message || "Failed to fetch northbound TD";
+      return {
+        message: errorMessage,
+        data: null,
+      };
+    }
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    return {
+      message: errorMessage,
+      data: null,
+    };
+  }
+};
+
+export { requestWeb, isSuccessResponse, handleHttpRequest, fetchNorthboundTD };
