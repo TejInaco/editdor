@@ -20,7 +20,7 @@ import React, {
   useMemo,
 } from "react";
 import ediTDorContext from "../../context/ediTDorContext";
-import { changeBetweenTd } from "../../util";
+import { changeBetweenTd } from "../../utils/tdOperations";
 import { editor } from "monaco-editor";
 
 type SchemaMapMessage = Map<string, Record<string, unknown>>;
