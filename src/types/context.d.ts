@@ -1,4 +1,3 @@
-export {};
 declare global {
   declare interface IEdiTDorContext {
     // offlineTD: Saving or displaying the TD as JSON For storage, sharing, or exporting Primary source of truth for the TD
@@ -24,7 +23,11 @@ declare global {
       toBeDeletedForm: { href: string; op: string },
       index: number
     ) => void;
-    addForm: (level: string, interactionName: string, form: any) => void;
+    addForm: (
+      level: "thing" | "properties" | "actions" | "events" | string,
+      interactionName: string,
+      form: any
+    ) => void;
     removeLink: (link: any) => void;
     removeOneOfAKindReducer: (kind: string, oneOfAKind: string) => void;
     addLinkedTd: (linkedTd: Record<string, any>) => void;
@@ -163,3 +166,4 @@ declare global {
     };
   }
 }
+export {};
