@@ -1,11 +1,7 @@
 ---
-description: 'ReactJS development standards and best practices'
-applyTo: '**/*.jsx, **/*.tsx, **/*.ts, **/*.css, **/*.scss'
+description: "ReactJS development standards and best practices"
+applyTo: "**/*.jsx, **/*.tsx, **/*.ts"
 ---
-
-# ReactJS Development Instructions
-
-Instructions for building high-quality ReactJS applications with modern patterns, hooks, and best practices following the official React documentation at https://react.dev.
 
 ## Project Context
 
@@ -25,6 +21,11 @@ Instructions for building high-quality ReactJS applications with modern patterns
 - Separate presentational and container components clearly
 - Use custom hooks for reusable stateful logic
 - Implement proper component hierarchies with clear data flow
+- Use **functional components + hooks** only. No class components.
+- Follow the Rules of Hooks (no conditional hooks; correct deps).
+- Use `React.FC` **only when the component uses `children`**; otherwise prefer typed props without `React.FC`.
+- Prefer composition over inheritance.
+- Use `useMemo`/`useCallback` only when it clearly helps (avoid premature memoization).
 
 ### TypeScript Integration
 
@@ -32,7 +33,6 @@ Instructions for building high-quality ReactJS applications with modern patterns
 - Define proper types for event handlers and refs
 - Implement generic components where appropriate
 - Use strict mode in `tsconfig.json` for type safety
-- Leverage React's built-in types (`React.FC`, `React.ComponentProps`, etc.)
 - Create union types for component variants and states
 
 ### Component Design
@@ -109,7 +109,6 @@ Instructions for building high-quality ReactJS applications with modern patterns
 
 - Write unit tests for components using React Testing Library
 - Test component behavior, not implementation details
-- Use Jest for test runner and assertion library
 - Implement integration tests for complex component interactions
 - Mock external dependencies and API calls appropriately
 - Test accessibility features and keyboard navigation
@@ -131,21 +130,6 @@ Instructions for building high-quality ReactJS applications with modern patterns
 - Provide alt text for images and descriptive text for icons
 - Implement proper color contrast ratios
 - Test with screen readers and accessibility tools
-
-## Implementation Process
-
-1. Plan component architecture and data flow
-2. Set up project structure with proper folder organization
-3. Define TypeScript interfaces and types
-4. Implement core components with proper styling
-5. Add state management and data fetching logic
-6. Implement routing and navigation
-7. Add form handling and validation
-8. Implement error handling and loading states
-9. Add testing coverage for components and functionality
-10. Optimize performance and bundle size
-11. Ensure accessibility compliance
-12. Add documentation and code comments
 
 ## Additional Guidelines
 

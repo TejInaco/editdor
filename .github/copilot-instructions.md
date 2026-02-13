@@ -21,20 +21,14 @@ Use these instructions for **all** code and answers generated for this repo.
 
 ## TypeScript rules
 
-- Apply the [typescript-instructions.md](./instructions/typescript-instructions.md) guidelines.
+- Apply the [typescript-instructions.md](./instructions/typescript.instructions.md) guidelines.
 - Use TypeScript for all new code (`.ts` / `.tsx`).
-- Use **interfaces** for data structures/props; use `type` for unions.
 - Keep types narrow; avoid over-widening (`string` vs specific unions).
 - Keep functions pure when possible; avoid hidden side effects.
 
 ## React rules
 
-- Apply the [react-instructions.md](./instructions/react-instructions.md) to all code.
-- Use **functional components + hooks** only. No class components.
-- Follow the Rules of Hooks (no conditional hooks; correct deps).
-- Use `React.FC` **only when the component uses `children`**; otherwise prefer typed props without `React.FC`.
-- Prefer composition over inheritance.
-- Use `useMemo`/`useCallback` only when it clearly helps (avoid premature memoization).
+- Apply the [react-instructions.md](./instructions/react.instructions.md) to all code.
 - Add cleanup in effects; avoid memory leaks.
 - Accessibility: semantic HTML first, proper labels/ARIA, keyboard support.
 
